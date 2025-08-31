@@ -19,9 +19,9 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, pin, **extra_fields):
+    def create_superuser(self, username, password, **extra_fields):
         """
-        Create and save a SuperUser with the given username and pin.
+        Create and save a SuperUser with the given username and password (which is the pin).
         """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -31,7 +31,8 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
-        return self.create_user(username, pin, **extra_fields)
+        # We pass the 'password' argument to create_user as 'pin'
+        return self.create_user(username, password, **extra_fields)
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
@@ -46,7 +47,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['pin']
+    REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
 
