@@ -1,0 +1,177 @@
+{% extends 'menu/base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-1 bg-white p-6 rounded-xl shadow-md h-fit">
+            <h2 class="text-2xl font-bold mb-4 text-center">Add a New Product</h2>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                {{ product_form.as_p }}
+                <button type="submit" class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">Add Product</button>
+            </form>
+        </div>
+
+        <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Your Products</h2>
+            <div id="product-list" class="space-y-4">
+                {% if products %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for product in products %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ product.name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ product.quantity }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">${{ product.price }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ product.discount_percent }}%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ product.tax_percent }}%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <form action="{% url 'menu:delete_product' product.id %}" method="post" class="inline-block">
+                                            {% csrf_token %}
+                                            <button type="submit" class="text-red-600 hover:text-red-900 transition duration-300">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center">No products added yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold mb-4">Generate Receipt</h3>
+                <form id="generate-receipt-form" onsubmit="return generateReceipt(event)">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="client-name" class="block text-sm font-medium text-gray-700">Client Name (Optional)</label>
+                        <input type="text" id="client-name" name="client_name" placeholder="Client Name" class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="seller-name" class="block text-sm font-medium text-gray-700">Seller Name</label>
+                        <input type="text" id="seller-name" name="seller_name" placeholder="My Business" value="My Business" class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4 class="text-lg font-bold">Select Products for Receipt</h4>
+                        <div class="space-y-2 max-h-48 overflow-y-auto mt-2">
+                            {% for product in products %}
+                            <div class="flex items-center justify-between p-2 border rounded-lg" data-product-id="{{ product.id }}">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="product-{{ product.id }}" value="{{ product.id }}" class="product-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label for="product-{{ product.id }}" class="ml-3 text-sm font-medium text-gray-700">{{ product.name }} - ${{ product.price }} (Qty: {{ product.quantity }})</label>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <label for="quantity-{{ product.id }}" class="text-sm font-medium text-gray-500">Qty:</label>
+                                    <input type="number" id="quantity-{{ product.id }}" value="1" min="1" max="{{ product.quantity }}" class="w-16 text-center border-gray-300 rounded-md shadow-sm text-sm" disabled data-product-price="{{ product.price }}" data-discount-percent="{{ product.discount_percent }}" data-tax-percent="{{ product.tax_percent }}">
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-gray-500">No products available to add to receipt.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button type="submit" class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition duration-300">Generate Receipt</button>
+                        <button type="button" onclick="clearForm()" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-300">Clear Form</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const productCheckboxes = document.querySelectorAll('.product-checkbox');
+        productCheckboxes.forEach(checkbox => {
+            const quantityInput = document.getElementById(`quantity-${checkbox.value}`);
+            checkbox.addEventListener('change', (event) => {
+                quantityInput.disabled = !event.target.checked;
+            });
+        });
+    });
+
+    async function generateReceipt(event) {
+        event.preventDefault();
+
+        const form = document.getElementById('generate-receipt-form');
+        const clientName = document.getElementById('client-name').value;
+        const sellerName = document.getElementById('seller-name').value;
+        const itemsWithQuantities = [];
+        
+        const products = document.querySelectorAll('.product-checkbox:checked');
+        products.forEach(checkbox => {
+            const quantityInput = document.getElementById(`quantity-${checkbox.value}`);
+            const parentDiv = quantityInput.closest('[data-product-id]');
+            
+            itemsWithQuantities.push({
+                name: parentDiv.querySelector('label').textContent.split(' - ')[0],
+                quantity: quantityInput.value,
+                price: quantityInput.dataset.productPrice,
+                discount: quantityInput.dataset.discountPercent,
+                tax: quantityInput.dataset.taxPercent
+            });
+        });
+        
+        const receiptData = {
+            client_name: clientName,
+            seller_name: sellerName,
+            items: itemsWithQuantities
+        };
+        
+        // Post the full receipt data to the generate-receipt endpoint
+        const receiptResponse = await fetch('{% url "menu:generate_receipt" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(receiptData)
+        });
+        
+        if (receiptResponse.ok) {
+            const blob = await receiptResponse.blob();
+            const url = window.URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `receipt_${Date.now()}.pdf`;
+            
+            document.body.appendChild(a);
+            a.click();
+            
+            window.URL.revokeObjectURL(url);
+            
+            alert('Receipt generated and downloaded successfully!');
+        } else {
+            alert('Failed to generate receipt.');
+        }
+
+        return false;
+    }
+    
+    function clearForm() {
+        document.getElementById('generate-receipt-form').reset();
+        document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+            document.getElementById(`quantity-${checkbox.value}`).disabled = true;
+        });
+    }
+</script>
+{% endblock %}

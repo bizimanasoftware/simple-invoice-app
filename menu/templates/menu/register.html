@@ -1,0 +1,36 @@
+{% extends 'menu/base.html' %}
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md">
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Create Account</h2>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            <label for="id_username" class="block text-sm font-medium text-gray-700">Username</label>
+            {{ form.username }}
+        </div>
+        <div>
+            <label for="id_pin" class="block text-sm font-medium text-gray-700">4-Digit PIN</label>
+            {{ form.pin }}
+        </div>
+        <div>
+            <label for="id_pin_confirm" class="block text-sm font-medium text-gray-700">Confirm PIN</label>
+            {{ form.pin_confirm }}
+        </div>
+        {% if form.errors %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                {% for field, error_list in form.errors.items %}
+                    {% for error in error_list %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <button type="submit" class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">Register</button>
+    </form>
+    <p class="text-center mt-4">
+        Already have an account? <a href="{% url 'menu:login' %}" class="text-blue-500 hover:underline">Login here</a>.
+    </p>
+</div>
+{% endblock %}
